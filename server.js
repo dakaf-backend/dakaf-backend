@@ -1,9 +1,11 @@
+const fs = require("fs")
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs");
 
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("./cloudinary");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -20,21 +22,28 @@ if (!fs.existsSync("uploads")) {
 }
 
 /* ================= MULTER CONFIG ================= */
-const storage = multer.diskStorage({
-  destination: "uploads/",
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "dakaf_products",
+    allowed_formats: ["jpg", "png", "jpeg", "webp"]
   }
 });
 
 const upload = multer({ storage });
+
 
 /* ================= SERVE IMAGES ================= */
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 /* ================= FAKE DATABASE ================= */
 let users = [];
+const PRODUCTS_FILE = "./products.json";
 let products = [];
+if (fs.existsSync(PRODUCTS_FILE)){
+  const data = fs.readFileSync(PRODUCTS_FILE, "utf-8");
+  products = JSON.parse(data);
+}
 
 /* ================= AUTH ================= */
 
@@ -86,20 +95,17 @@ app.post("/login", (req, res) => {
 app.post("/products", upload.single("image"), (req, res) => {
   const { name, price } = req.body;
 
-  if (!req.file) {
-    return res.status(400).json({ message: "Image is required" });
-  }
-
   const product = {
     id: Date.now(),
     name,
     price,
-    image: `/uploads/${req.file.filename}`
+    image: req.file.path // 🔥 CLOUDINARY URL
   };
 
   products.push(product);
   res.json({ message: "Product uploaded", product });
 });
+
 
 app.delete("/products/:id", (req, res) => {
   const { id } = req.params;
