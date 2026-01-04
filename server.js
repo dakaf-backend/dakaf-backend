@@ -33,8 +33,15 @@ let products = [];
 
 // Load saved products
 if (fs.existsSync(PRODUCTS_FILE)) {
-  const data = fs.readFileSync(PRODUCTS_FILE, "utf-8");
-  products = JSON.parse(data);
+  try{
+     const data = 
+     fs.readFileSync(PRODUCTS_FILE, "utf-8");
+  products = data ? JSON.parse(data): [];
+  } catch (err){
+    console.error("failed to parse products.json, starting fresh");
+    products = [];
+  }
+ 
 }
 
 // Save products helper
