@@ -14,6 +14,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
+
 /* ================= CLOUDINARY + MULTER ================= */
 const storage = new CloudinaryStorage({
   cloudinary,
@@ -118,7 +119,11 @@ app.post("/products", upload.single("image"), (req, res) => {
 
 // GET ALL PRODUCTS
 app.get("/products", (req, res) => {
-  res.json(products);
+  try{
+    res.json(products);
+  }catch(err){
+    res.status(500).json({message: "internal server error"})
+  }
 });
 
 // UPDATE PRODUCT
